@@ -1,6 +1,6 @@
 package com.vnpt.prod.controller;
 
-import com.vnpt.prod.model.Product;
+import com.vnpt.prod.model.ProductEntity;
 import com.vnpt.prod.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +21,14 @@ public class ProductController {
     // API tạo mới sản phẩm
     @PostMapping
     @Operation(summary = "Tạo mới sản phẩm", description = "Nhận thông tin sản phẩm từ client và lưu vào cơ sở dữ liệu.")
-    public Product save(@RequestBody Product product) {
+    public ProductEntity save(@RequestBody ProductEntity product) {
         return service.save(product);
     }
 
     // API tìm kiếm (Elasticsearch)
     @GetMapping("/search")
     @Operation(summary = "Tìm kiếm sản phẩm", description = "Tìm kiếm sản phẩm dựa trên từ khóa sử dụng Elasticsearch.")
-    public List<Product> search(@RequestParam String q) {
+    public List<ProductEntity> search(@RequestParam String q) {
         return service.search(q);
     }
 
@@ -43,7 +43,7 @@ public class ProductController {
     // API lấy chi tiết theo ID
     @GetMapping("/{id}")
     @Operation(summary = "Lấy chi tiết sản phẩm", description = "Lấy thông tin chi tiết của sản phẩm dựa trên ID.")
-    public Product getById(@PathVariable UUID id) {
+    public ProductEntity getById(@PathVariable UUID id) {
         return service.getById(id);
     }
 }
