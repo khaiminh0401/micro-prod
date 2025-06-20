@@ -32,12 +32,16 @@ public class ProductDocument {
     private BigDecimal price;
 
     @Field(type = FieldType.Date, name = "created_at")
-    private LocalDateTime createdAt;
+    private String createdAt;
 
     @Field(type = FieldType.Date, name = "updated_at")
-    private LocalDateTime updatedAt;
+    private String updatedAt;
 
-    // getter/setter, constructor...
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt != null ? createdAt.toString() : null;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt != null ? updatedAt.toString() : null;
+    }
 }
-
-

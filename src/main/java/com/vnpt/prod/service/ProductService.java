@@ -28,41 +28,47 @@ public class ProductService {
             return; // Không có dữ liệu để đồng bộ
         }
         List<ProductDocument> all = jpaRepo.findAll().stream()
-            .map(p -> new ProductDocument(
-                p.getId(),
-                p.getName(),
-                p.getDescription(),
-                p.getPrice(),
-                p.getCreatedAt(),
-                p.getUpdatedAt()))
+            .map(p -> {
+                ProductDocument doc = new ProductDocument();
+                doc.setId(p.getId());
+                doc.setName(p.getName());
+                doc.setDescription(p.getDescription());
+                doc.setPrice(p.getPrice());
+                doc.setCreatedAt(p.getCreatedAt());
+                doc.setUpdatedAt(p.getUpdatedAt());
+                return doc;
+            })
             .toList();
         elasticRepo.saveAll(all);
     }
 
     // Tìm kiếm từ Elasticsearch
     public List<ProductEntity> search(String keyword) {
-        List<ProductDocument> docs = elasticRepo.findByNameContainingIgnoreCase(keyword);
-        return elasticRepo.findByNameContainingIgnoreCase(keyword).stream()
-            .map(doc -> new ProductEntity(
-                doc.getId(),
-                doc.getName(),
-                doc.getDescription(),
-                doc.getPrice(),
-                doc.getCreatedAt(),
-                doc.getUpdatedAt()))
+        List<ProductDocument> docs = elasticRepo.searchByName(keyword);
+        return elasticRepo.searchByName(keyword).stream()
+            .map(doc -> {
+                ProductEntity entity = new ProductEntity();
+                entity.setId(doc.getId());
+                entity.setName(doc.getName());
+                entity.setDescription(doc.getDescription());
+                entity.setPrice(doc.getPrice());
+                entity.setCreatedAt(doc.getCreatedAt());
+                entity.setUpdatedAt(doc.getUpdatedAt());
+                return entity;
+            })
             .toList();
     }
 
     // Thêm mới sản phẩm (PostgreSQL + Elasticsearch)
     public ProductEntity save(ProductEntity p) {
         ProductEntity saved = jpaRepo.save(p);
-        ProductDocument doc = new ProductDocument(
-            saved.getId(),
-            saved.getName(),
-            saved.getDescription(),
-            saved.getPrice(),
-            saved.getCreatedAt(),
-            saved.getUpdatedAt());
+        ProductDocument doc = new ProductDocument();
+        doc.setId(saved.getId());
+        doc.setName(saved.getName());
+        doc.setDescription(saved.getDescription());
+        doc.setPrice(saved.getPrice());
+        doc.setCreatedAt(saved.getCreatedAt());
+        doc.setUpdatedAt(saved.getUpdatedAt());
         elasticRepo.save(doc);
         return saved;
     }
@@ -71,4 +77,5 @@ public class ProductService {
     public ProductEntity getById(UUID id) {
         return jpaRepo.findById(id).orElse(null);
     }
+    
 }
