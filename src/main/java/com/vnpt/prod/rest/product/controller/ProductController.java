@@ -1,7 +1,10 @@
-package com.vnpt.prod.controller;
+package com.vnpt.prod.rest.product.controller;
 
 import com.vnpt.prod.model.ProductEntity;
-import com.vnpt.prod.service.ProductService;
+import com.vnpt.prod.rest.product.dto.ProductDTO;
+import com.vnpt.prod.search.SearchFilters;
+import com.vnpt.prod.service.product.ProductService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/api/product")
 public class ProductController {
 
     private final ProductService service;
@@ -26,10 +29,15 @@ public class ProductController {
     }
 
     // API tìm kiếm (Elasticsearch)
-    @GetMapping("/search")
-    @Operation(summary = "Tìm kiếm sản phẩm", description = "Tìm kiếm sản phẩm dựa trên từ khóa sử dụng Elasticsearch.")
-    public List<ProductEntity> search(@RequestParam String q) {
-        return service.search(q);
+    @PostMapping("/search")
+    @Operation(summary = "Tìm kiếm sản phẩm", description = "Tìm kiếm sản phẩm dựa trên các bộ lọc từ client.")
+    public List<ProductDTO> search(@RequestBody final SearchFilters filters) {
+        return service.search(filters);
+    }
+    @PostMapping
+    @Operation(summary = "Lưu sản phẩm", description = "Lưu thông tin sản phẩm từ client vào cơ sở dữ liệu.")
+    public void save(@RequestBody final ProductDTO dto) {
+        service.save(dto);
     }
 
     // API đồng bộ dữ liệu PostgreSQL -> Elasticsearch
