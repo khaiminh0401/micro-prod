@@ -1,4 +1,4 @@
-package com.vnpt.prod.config;
+package com.vnpt.prod.configuration;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;

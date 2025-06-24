@@ -40,6 +40,26 @@ public class ElasticsearchProxy<E extends AbstractDocument, T extends BaseDTO> {
                     QueryBuilder.buildSearchRequest(filters, meta),
                     documentClass
             );
+            
+
+            List<E> documents = response.hits().hits().stream().map(Hit::source).toList();
+
+            Converter<E, T> converter = CONVERTER_MAP.get(documentClass);
+
+            return documents.stream().map(converter::convertToDto).toList();
+
+        } catch (IOException e) {
+            LOG.error("{}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+        public List<T> suggest(final SearchFilters filters, final SearchMeta meta, final Class<E> documentClass) {
+        try {
+            SearchResponse<E> response = client.search(
+                    QueryBuilder.buildSearchRequest(filters, meta),
+                    documentClass
+            );
+            
 
             List<E> documents = response.hits().hits().stream().map(Hit::source).toList();
 

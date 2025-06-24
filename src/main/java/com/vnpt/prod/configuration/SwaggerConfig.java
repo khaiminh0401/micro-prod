@@ -1,4 +1,4 @@
-package com.vnpt.prod.config;
+package com.vnpt.prod.configuration;
 
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;

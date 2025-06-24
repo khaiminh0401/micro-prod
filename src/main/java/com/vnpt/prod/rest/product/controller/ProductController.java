@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/product")
@@ -22,11 +24,11 @@ public class ProductController {
     }
 
     // API tạo mới sản phẩm
-    @PostMapping
-    @Operation(summary = "Tạo mới sản phẩm", description = "Nhận thông tin sản phẩm từ client và lưu vào cơ sở dữ liệu.")
-    public ProductEntity save(@RequestBody ProductEntity product) {
-        return service.save(product);
-    }
+    // @PostMapping
+    // @Operation(summary = "Tạo mới sản phẩm", description = "Nhận thông tin sản phẩm từ client và lưu vào cơ sở dữ liệu.")
+    // public ProductEntity save(@RequestBody ProductEntity product) {
+    //     return service.save(product);
+    // }
 
     // API tìm kiếm (Elasticsearch)
     @PostMapping("/search")
@@ -54,4 +56,10 @@ public class ProductController {
     public ProductEntity getById(@PathVariable UUID id) {
         return service.getById(id);
     }
+    @PostMapping("/suggest")
+    @Operation(summary = "Gợi ý sản phẩm", description = "Gợi ý sản phẩm dựa trên các bộ lọc từ client.")
+    public List<ProductDTO> suggest(@RequestBody final SearchFilters filters) {        
+        return service.suggest(filters);
+    }
+    
 }

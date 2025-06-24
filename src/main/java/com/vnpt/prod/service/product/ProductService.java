@@ -12,20 +12,9 @@ import com.vnpt.prod.search.query.ElasticsearchProxy;
 import com.vnpt.prod.search.query.QueryType;
 import com.vnpt.prod.search.query.SearchMeta;
 import com.vnpt.prod.service.product.converter.ProductDTOConverter;
-
-import co.elastic.clients.elasticsearch.core.IndexRequest;
-import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-
-import org.elasticsearch.client.RequestOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -92,7 +81,7 @@ public class ProductService {
     public List<ProductDTO> search(SearchFilters filters) {
         return client.search(
                 filters,
-                new SearchMeta(List.of("name"), "products", QueryType.MATCH),
+                new SearchMeta(List.of("name"), Indices.PRODUCT_INDEX, QueryType.MATCH),
                 ProductDocument.class
         );
     }
@@ -104,5 +93,14 @@ public class ProductService {
         }
 
         this.elasticRepo.save(document);
+    }
+
+    public List<ProductDTO> suggest(final SearchFilters filters) {
+        try {
+            return this.client.suggest(filters, new SearchMeta(List.of("name"), Indices.PRODUCT_INDEX, QueryType.SUGGEST), ProductDocument.class);
+        } catch (Exception e) {
+            LOG.error("Error during suggest: {}", e.getMessage(), e);
+            return List.of();
+        }
     }
 }
