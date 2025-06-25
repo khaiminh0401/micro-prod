@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -100,6 +101,15 @@ public class ProductService {
             return this.client.suggest(filters, new SearchMeta(List.of("name"), Indices.PRODUCT_INDEX, QueryType.SUGGEST), ProductDocument.class);
         } catch (Exception e) {
             LOG.error("Error during suggest: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    public List<Map<String, Object>> searchDocument(String keyword) {
+        try {
+            return this.client.searchDocument(keyword);
+        } catch (Exception e) {
+            LOG.error("Error during searchDocument: {}", e.getMessage(), e);
             return List.of();
         }
     }

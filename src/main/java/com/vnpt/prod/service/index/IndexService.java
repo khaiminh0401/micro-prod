@@ -3,6 +3,8 @@ package com.vnpt.prod.service.index;
 import java.util.List;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +55,15 @@ public class IndexService {
                     .mappings(t -> t.withJson(getAsInputStream(indexInfo.mappingPath()))));
         } catch (Exception e) {
             LOG.error("{}", e.getMessage(), e);
+        }
+    }
+
+    public IndexResponse createIndex(IndexRequest<?> indexRequest) {
+        try {
+            return client.index(indexRequest);
+        } catch (Exception e) {
+            LOG.error("{}", e.getMessage(), e);
+            return null;
         }
     }
 
