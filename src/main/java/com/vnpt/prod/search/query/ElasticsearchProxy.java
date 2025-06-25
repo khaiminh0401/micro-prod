@@ -4,6 +4,8 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.vnpt.prod.document.AbstractDocument;
 import com.vnpt.prod.rest.dto.BaseDTO;
 import com.vnpt.prod.search.SearchFilters;
@@ -13,9 +15,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -73,21 +77,23 @@ public class ElasticsearchProxy<E extends AbstractDocument, T extends BaseDTO> {
     }
 
     public List<Map<String, Object>> searchDocument(String keyword) throws IOException {
-            SearchRequest request = SearchRequest.of(s -> s
-        .index("documents") // Tên index bạn đã push file vào
-        .query(q -> q
-            .match(m -> m
-                .field("attachment.content")
-                .query(keyword)
-            )
-        )
-    );
+        // 1. Gửi request tìm kiếm
+        SearchResponse<Map<String, Object>> response = client.search(
+                SearchRequest.of(s -> s
+                        .index("documents")
+                        .query(q -> q
+                                .match(m -> m
+                                        .field("attachment.content")
+                                        .query(keyword)))),
+                (Type) new TypeReference<Map<String, Object>>() {
+                });
 
-    SearchResponse<Map> response = client.search(request, Map.class);
+        // 2. Trích xuất danh sách kết quả
+        List<Map<String, Object>> results = response.hits().hits().stream()
+                .map(Hit::source)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-    List<Map<String, Object>> results = response.hits().hits().stream()
-        .map(Hit::source)
-        .collect(Collectors.toList());
         return results;
     }
 
