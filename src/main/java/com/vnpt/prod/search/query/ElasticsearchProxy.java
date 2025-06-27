@@ -83,7 +83,7 @@ public class ElasticsearchProxy<E extends AbstractDocument, T extends BaseDTO> {
                         .index("documents")
                         .query(q -> q
                                 .match(m -> m
-                                        .field("attachment.content")
+                                        .field("_extracted_attachment.content")
                                         .query(keyword)))),
                 (Type) new TypeReference<Map<String, Object>>() {
                 });

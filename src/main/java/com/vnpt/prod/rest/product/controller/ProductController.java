@@ -8,13 +8,11 @@ import com.vnpt.prod.service.product.ProductService;
 
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-import org.elasticsearch.client.RequestOptions;
-import org.hibernate.mapping.Index;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,10 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/product")
+@Tag(name = "Product", description = "Quản lý sản phẩm")
 public class ProductController {
 
     private final ProductService service;
@@ -38,7 +36,7 @@ public class ProductController {
             ProductService service,
             IndexService indexService) {
         this.service = service;
-        this.indexService = null;
+        this.indexService = indexService;
     }
 
     // API tạo mới sản phẩm
@@ -83,18 +81,26 @@ public class ProductController {
         return service.suggest(filters);
     }
 
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
+    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    @Operation(
+        summary = "Upload file", 
+        description = "Upload file để index vào Elasticsearch với attachment pipeline"
+    )
+    public ResponseEntity<String> uploadFile(
+        @RequestParam("file") 
+        @Schema(description = "File to upload", type = "string", format = "binary")
+        MultipartFile file
+    ) throws IOException {
         byte[] bytes = file.getBytes();
         String base64 = Base64.getEncoder().encodeToString(bytes);
 
         Map<String, Object> doc = new HashMap<>();
-        doc.put("data", base64);
+        doc.put("_attachment", base64);
         doc.put("file_name", file.getOriginalFilename());
-
+        
         IndexRequest<Map<String, Object>> request = IndexRequest.of(i -> i
                 .index("documents")
-                .pipeline("attachment-pipeline")
+                .pipeline("ent-search-generic-ingestion")
                 .document(doc));
 
         IndexResponse response = indexService.createIndex(request);
