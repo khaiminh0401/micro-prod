@@ -1,11 +1,13 @@
 package com.vnpt.prod.service.product;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vnpt.prod.document.doc.DocumentPDF;
 import com.vnpt.prod.document.product.ProductDocument;
 import com.vnpt.prod.document.product.ProductElasticRepository;
 import com.vnpt.prod.helper.Indices;
 import com.vnpt.prod.model.ProductEntity;
 import com.vnpt.prod.repository.jpa.ProductRepository;
+import com.vnpt.prod.rest.document.dto.DocumentPDFResult;
 import com.vnpt.prod.rest.product.dto.ProductDTO;
 import com.vnpt.prod.search.SearchFilters;
 import com.vnpt.prod.search.query.ElasticsearchProxy;
@@ -105,7 +107,7 @@ public class ProductService {
         }
     }
 
-    public List<Map<String, Object>> searchDocument(String keyword) {
+    public List<DocumentPDFResult> searchDocument(String keyword) {
         try {
             return this.client.searchDocument(keyword);
         } catch (Exception e) {

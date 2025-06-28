@@ -1,6 +1,8 @@
 package com.vnpt.prod.rest.product.controller;
 
+import com.vnpt.prod.document.doc.DocumentPDF;
 import com.vnpt.prod.model.ProductEntity;
+import com.vnpt.prod.rest.document.dto.DocumentPDFResult;
 import com.vnpt.prod.rest.product.dto.ProductDTO;
 import com.vnpt.prod.search.SearchFilters;
 import com.vnpt.prod.service.index.IndexService;
@@ -95,12 +97,12 @@ public class ProductController {
         String base64 = Base64.getEncoder().encodeToString(bytes);
 
         Map<String, Object> doc = new HashMap<>();
-        doc.put("_attachment", base64);
-        doc.put("file_name", file.getOriginalFilename());
+        doc.put("data", base64);
+        doc.put("filename", file.getOriginalFilename());
         
         IndexRequest<Map<String, Object>> request = IndexRequest.of(i -> i
                 .index("documents")
-                .pipeline("ent-search-generic-ingestion")
+                .pipeline("attachment-pipeline")
                 .document(doc));
 
         IndexResponse response = indexService.createIndex(request);
@@ -108,7 +110,7 @@ public class ProductController {
     }
 
     @GetMapping("/search-content-file")
-    public ResponseEntity<List<Map<String, Object>>> searchContentFile(@RequestParam("q") String keyword) throws IOException {
+    public ResponseEntity<List<DocumentPDFResult>> searchContentFile(@RequestParam("q") String keyword) throws IOException {
         var results = service.searchDocument(keyword);
 
         return ResponseEntity.ok(results);

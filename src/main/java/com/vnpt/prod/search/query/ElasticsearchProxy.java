@@ -7,6 +7,8 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.vnpt.prod.document.AbstractDocument;
+import com.vnpt.prod.document.doc.DocumentPDF;
+import com.vnpt.prod.rest.document.dto.DocumentPDFResult;
 import com.vnpt.prod.rest.dto.BaseDTO;
 import com.vnpt.prod.search.SearchFilters;
 import com.vnpt.prod.search.converter.Converter;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,24 +79,44 @@ public class ElasticsearchProxy<E extends AbstractDocument, T extends BaseDTO> {
         }
     }
 
-    public List<Map<String, Object>> searchDocument(String keyword) throws IOException {
+    public List<DocumentPDFResult> searchDocument(String keyword) throws IOException {
         // 1. Gửi request tìm kiếm
-        SearchResponse<Map<String, Object>> response = client.search(
+        SearchResponse<Map> response = client.search(
                 SearchRequest.of(s -> s
                         .index("documents")
                         .query(q -> q
                                 .match(m -> m
-                                        .field("_extracted_attachment.content")
-                                        .query(keyword)))),
-                (Type) new TypeReference<Map<String, Object>>() {
-                });
+                                        .field("attachment.content")
+                                        .query(keyword)))
+                        .highlight(h -> {
+                            h.fields("attachment.content", hf -> hf
+                                    .preTags("<em>")
+                                    .postTags("</em>"));
+                            return h;
+                        })),
+                Map.class);
+        List<DocumentPDFResult> results = new ArrayList<>();
 
-        // 2. Trích xuất danh sách kết quả
-        List<Map<String, Object>> results = response.hits().hits().stream()
-                .map(Hit::source)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        for (Hit<Map> hit : response.hits().hits()) {
+            Map<String, Object> doc = hit.source();
 
+            // Lấy tên file (nếu có)
+            String filename = (String) doc.get("filename");
+            System.out.println("Tên file: " + filename);
+
+            // Lấy highlight
+            String snippet = null;
+            List<String> highlights = hit.highlight().get("attachment.content");
+            if (highlights != null && !highlights.isEmpty()) {
+                snippet = highlights.get(0); // Lấy đoạn đầu tiên
+                System.out.println("Đoạn liên quan: " + snippet);
+            }
+            doc.remove("attachment"); // Loại bỏ trường attachment nếu không cần thiết
+            // Thêm vào danh sách kết quả
+            results.add(new DocumentPDFResult(doc, snippet));
+        }
+
+        // Trả về danh sách kết quả
         return results;
     }
 
