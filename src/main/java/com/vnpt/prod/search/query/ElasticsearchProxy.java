@@ -5,9 +5,7 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.vnpt.prod.document.AbstractDocument;
-import com.vnpt.prod.document.doc.DocumentPDF;
 import com.vnpt.prod.rest.document.dto.DocumentPDFResult;
 import com.vnpt.prod.rest.dto.BaseDTO;
 import com.vnpt.prod.search.SearchFilters;
@@ -17,12 +15,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -95,29 +92,40 @@ public class ElasticsearchProxy<E extends AbstractDocument, T extends BaseDTO> {
                             return h;
                         })),
                 Map.class);
-        List<DocumentPDFResult> results = new ArrayList<>();
-
-        for (Hit<Map> hit : response.hits().hits()) {
-            Map<String, Object> doc = hit.source();
-
-            // Lấy tên file (nếu có)
-            String filename = (String) doc.get("filename");
-            System.out.println("Tên file: " + filename);
-
-            // Lấy highlight
-            String snippet = null;
-            List<String> highlights = hit.highlight().get("attachment.content");
-            if (highlights != null && !highlights.isEmpty()) {
-                snippet = highlights.get(0); // Lấy đoạn đầu tiên
-                System.out.println("Đoạn liên quan: " + snippet);
-            }
-            doc.remove("attachment"); // Loại bỏ trường attachment nếu không cần thiết
-            // Thêm vào danh sách kết quả
-            results.add(new DocumentPDFResult(doc, snippet));
-        }
-
-        // Trả về danh sách kết quả
-        return results;
+        // Sử dụng lambda để xử lý kết quả với null-safe handling
+        return response.hits().hits().stream()
+                .filter(hit -> Objects.nonNull(hit.source()))
+                .map(hit -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> doc = (Map<String, Object>) hit.source();
+                    
+                    return Map.entry(hit, doc); // Pair hit và doc để giữ context
+                })
+                .filter(entry -> Objects.nonNull(entry.getValue()))
+                .map(entry -> {
+                    Hit<Map> hit = entry.getKey();
+                    Map<String, Object> doc = entry.getValue();
+                    
+                    // Lấy tên file (nếu có) với lambda
+                    Optional.ofNullable(doc.get("filename"))
+                            .map(String::valueOf)
+                            .ifPresent(filename -> System.out.println("Tên file: " + filename));
+                    
+                    // Lấy highlight với lambda và null-safe handling
+                    String snippet = Optional.ofNullable(hit.highlight())
+                            .map(highlights -> highlights.get("attachment.content"))
+                            .filter(list -> !list.isEmpty())
+                            .map(list -> list.get(0))
+                            .orElse(null);
+                    
+                    Optional.ofNullable(snippet)
+                            .ifPresent(s -> System.out.println("Đoạn liên quan: " + s));
+                    
+                    doc.remove("attachment"); // Loại bỏ trường attachment nếu không cần thiết
+                    
+                    return new DocumentPDFResult(doc, snippet);
+                })
+                .collect(Collectors.toList());
     }
 
 }
